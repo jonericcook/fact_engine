@@ -1,4 +1,11 @@
 defmodule Util do
+  def get_file_contents(file_path) do
+    with {:ok, file_lines} <- get_file_lines(file_path),
+         {:ok, parsed_file_lines} <- parse_file_lines(file_lines) do
+      {:ok, parsed_file_lines}
+    end
+  end
+
   def read_file(file_path) do
     File.read(file_path)
   end
@@ -22,9 +29,24 @@ defmodule Util do
   end
 
   def parse_file_lines(file_lines) do
-    Enum.reduce(file_lines, {[], []}, fn file_line, {parsed_file_lines, errors} ->
-      nil
+    file_lines
+    |> Enum.reduce({[], []}, fn file_line, {parsed_file_lines, errors} ->
+      with {:ok, parsed_file_line} <- parse_file_line(file_line) do
+        {parsed_file_lines ++ [parsed_file_line], errors}
+      else
+        {:error, error} ->
+          {parsed_file_lines, errors ++ [error]}
+      end
     end)
+    |> handle_parsed_file_lines()
+  end
+
+  def handle_parsed_file_lines({parsed_file_lines, []}) do
+    {:ok, parsed_file_lines}
+  end
+
+  def handle_parsed_file_lines({_parsed_file_lines, errors}) do
+    {:error, errors}
   end
 
   def parse_file_line(file_line) do
@@ -33,7 +55,7 @@ defmodule Util do
       |> String.split(" ", parts: 3, trim: true)
       |> Enum.map(&String.trim(&1))
 
-    with {:ok, split_and_trimmed} <- check_field_count(split_and_trimmed),
+    with :ok <- check_field_count(split_and_trimmed),
          :ok <- check_action(split_and_trimmed),
          :ok <- check_arguments(split_and_trimmed) do
       {:ok, split_and_trimmed}
@@ -43,7 +65,7 @@ defmodule Util do
   def check_field_count(split_and_trimmed) do
     case Enum.count(split_and_trimmed) do
       3 ->
-        {:ok, split_and_trimmed}
+        :ok
 
       _ ->
         {:error, :invalid_line_format}
@@ -63,13 +85,17 @@ defmodule Util do
   end
 
   def check_arguments([_, _, arguments]) do
+    with :ok <- check_parentheses(arguments),
+         :ok <- check_commas(arguments) do
+      :ok
+    end
   end
 
   def check_parentheses(arguments) do
     left_parens_count = arguments |> String.graphemes() |> Enum.count(&(&1 == "("))
     right_parens_count = arguments |> String.graphemes() |> Enum.count(&(&1 == ")"))
 
-    if left_parens_count == right_parens_count do
+    if left_parens_count == right_parens_count and left_parens_count == 1 do
       :ok
     else
       {:error, :parentheses_mismatch}
@@ -83,7 +109,7 @@ defmodule Util do
 
     args_count = no_parens |> String.split(",", trim: true) |> Enum.count()
 
-    if args_count == comma_count - 1 do
+    if args_count - 1 == comma_count do
       :ok
     else
       {:error, :comma_to_args_mismatch}
