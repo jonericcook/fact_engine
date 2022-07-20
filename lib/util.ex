@@ -115,4 +115,11 @@ defmodule Util do
       {:error, :comma_to_args_mismatch}
     end
   end
+
+  def parse_arguments(arguments) do
+    arguments
+    |> String.slice(1..-2)
+    |> String.split(",", trim: true)
+    |> Enum.map(&String.trim(&1))
+  end
 end
