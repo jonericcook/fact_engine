@@ -1,21 +1,31 @@
-# FactEngine
+# Notes
 
-**TODO: Add description**
+I chose to sort the arguments because it doesn't make sense to have two entries - one for (alex, sam) and one for (sam, alex). For those two to make sense I would have to understand the meaning of the statement.
 
-## Installation
+It was unclear how to create the constraint between the number of arguments and a statement therefore I opted to not verify the number of arguments for a given statement. For example INPUT love (cat, dog) and INPUT love (cheese) would both be accepted.
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `fact_engine` to your list of dependencies in `mix.exs`:
+---
 
-```elixir
-def deps do
-  [
-    {:fact_engine, "~> 0.1.0"}
-  ]
-end
-```
+If all the arguments have a capital letter in it then there is nothing too search with.
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/fact_engine](https://hexdocs.pm/fact_engine).
+Creating filter function where there can be a one or more values that are used to lookup in state.
 
+The filter criteria is values to look up and then different and duplicate values.
+
+First step, if we have values to use to search, search with values given.
+
+Filter down that set one filter at a time in a pipeline.
+
+(X,X,X) -> wants all lists where it contains a value repeated 3 times
+
+(X,Y,4) -> wants all lists where it contains a 4 and its other items don't repeat
+
+(X,Y,4)
+
+after you get lists that contain 4
+
+(1,1,2,2,4)
+(X,X,Y,Y,4)
+
+(3,3,4)
+(X,X,4)

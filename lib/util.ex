@@ -20,7 +20,7 @@ defmodule Util do
 
       case Enum.count(file_lines) do
         0 ->
-          {:error, :file_is_empty}
+          {:error, "File at #{file_path} is empty."}
 
         _ ->
           {:ok, file_lines}
@@ -57,8 +57,11 @@ defmodule Util do
 
     with :ok <- check_field_count(split_and_trimmed),
          :ok <- check_action(split_and_trimmed),
-         :ok <- check_arguments(split_and_trimmed) do
-      {:ok, split_and_trimmed}
+         :ok <- check_statement(split_and_trimmed),
+         {:ok, formatted_arguments} <-
+           check_arguments(split_and_trimmed) do
+      {_, file_line_no_arguments} = List.pop_at(split_and_trimmed, -1)
+      {:ok, file_line_no_arguments ++ [formatted_arguments]}
     end
   end
 
@@ -68,7 +71,15 @@ defmodule Util do
         :ok
 
       _ ->
-        {:error, :invalid_line_format}
+        {:error, "#{Enum.join(split_and_trimmed, " ")} is malformed."}
+    end
+  end
+
+  def check_statement([_, statement, _]) do
+    if Regex.match?(~r/^[a-z_]+$/, statement) do
+      :ok
+    else
+      {:error, "#{statement} should only contain lowercase alphabetic letters and underscores"}
     end
   end
 
@@ -80,25 +91,45 @@ defmodule Util do
     :ok
   end
 
-  def check_action([_, _, _]) do
-    {:error, :invalid_action}
+  def check_action([action, _, _]) do
+    {:error, "#{action} is an invalid action"}
   end
 
   def check_arguments([_, _, arguments]) do
     with :ok <- check_parentheses(arguments),
-         :ok <- check_commas(arguments) do
+         :ok <- check_if_not_empty(arguments),
+         :ok <- check_commas(arguments),
+         :ok <- check_for_empty_strings(arguments),
+         formatted_arguments <- format_arguments(arguments),
+         :ok <- check_if_alphanumeric(formatted_arguments) do
+      {:ok, formatted_arguments}
+    end
+  end
+
+  def check_if_not_empty(arguments) do
+    if String.slice(arguments, 1..-2) == "" do
+      {:error, "#{arguments} is empty."}
+    else
       :ok
     end
   end
 
   def check_parentheses(arguments) do
-    left_parens_count = arguments |> String.graphemes() |> Enum.count(&(&1 == "("))
-    right_parens_count = arguments |> String.graphemes() |> Enum.count(&(&1 == ")"))
+    arguments_graphemes = arguments |> String.graphemes()
 
-    if left_parens_count == right_parens_count and left_parens_count == 1 do
+    left_parens_count_is_one = arguments_graphemes |> Enum.count(&(&1 == "(")) == 1
+    right_parens_count_is_one = arguments_graphemes |> Enum.count(&(&1 == ")")) == 1
+
+    left_paren = arguments_graphemes |> List.first()
+    right_paren = arguments_graphemes |> List.last()
+
+    if left_parens_count_is_one and
+         right_parens_count_is_one and
+         left_paren == "(" and
+         right_paren == ")" do
       :ok
     else
-      {:error, :parentheses_mismatch}
+      {:error, "#{arguments} has parentheses issues."}
     end
   end
 
@@ -112,14 +143,88 @@ defmodule Util do
     if args_count - 1 == comma_count do
       :ok
     else
-      {:error, :comma_to_args_mismatch}
+      {:error, "#{arguments} has too many commas."}
     end
   end
 
-  def parse_arguments(arguments) do
+  def check_for_empty_strings(arguments) do
+    result =
+      arguments
+      |> String.slice(1..-2)
+      |> String.split(",", trim: true)
+      |> Enum.map(&String.trim(&1))
+
+    empty_string_count =
+      Enum.filter(result, fn x -> x == "" end)
+      |> Enum.count()
+
+    if empty_string_count == 0 do
+      :ok
+    else
+      {:error, "#{arguments} contains a field that is an empty string."}
+    end
+  end
+
+  def format_arguments(arguments) do
     arguments
     |> String.slice(1..-2)
     |> String.split(",", trim: true)
     |> Enum.map(&String.trim(&1))
+    |> Enum.sort()
+  end
+
+  def check_if_alphanumeric(content) do
+    joined_content = Enum.join(content, ",")
+
+    if Regex.match?(~r/^[a-zA-Z0-9,]+$/, joined_content) do
+      :ok
+    else
+      {:error, "#{joined_content} should only contain alphanumeric and commas"}
+    end
+  end
+
+  def has_an_uppercase_letter(content) when is_binary(content),
+    do: String.downcase(content) != content
+
+  def has_an_uppercase_letter(_content), do: false
+
+  def get_lists_that_contain_values(list_of_lists, []) do
+    list_of_lists
+  end
+
+  def get_lists_that_contain_values(list_of_lists, values) do
+    Enum.filter(list_of_lists, fn list ->
+      Enum.any?(list, fn item -> item in values end)
+    end)
+  end
+
+  def filter_lists_that_matches_frequencies(list_of_lists, frequencies, values) do
+    Enum.filter(list_of_lists, fn list ->
+      list = list -- values
+      list_frequencies = Enum.frequencies(list)
+
+      list_keys_count = Map.keys(list_frequencies) |> Enum.count()
+      list_values = Map.values(list_frequencies) |> Enum.sort()
+
+      frequencies_keys_count = Map.keys(frequencies) |> Enum.count()
+      frequencies_values = Map.values(frequencies) |> Enum.sort()
+
+      list_keys_count == frequencies_keys_count and list_values == frequencies_values
+    end)
+  end
+
+  def get_values_to_search_with(arguments) do
+    Enum.filter(arguments, fn arg ->
+      !has_an_uppercase_letter(arg)
+    end)
+  end
+
+  def get_frequency_counts(arguments) do
+    arguments
+    |> Enum.filter(&has_an_uppercase_letter(&1))
+    |> Enum.frequencies()
   end
 end
+
+# check how many unique values there are
+# check how many duplicates there are
