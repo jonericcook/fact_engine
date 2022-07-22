@@ -100,6 +100,16 @@ defmodule FactEngine.Util do
     end)
   end
 
+  @doc """
+  Gets the content of the file at the specified file path.
+  """
+  def get_file_contents(file_path) do
+    with {:ok, file_lines} <- get_file_lines(file_path),
+         {:ok, parsed_file_lines} <- parse_file_lines(file_lines) do
+      {:ok, parsed_file_lines}
+    end
+  end
+
   defp maybe_dedup(results, query_arguments) do
     result_dedup_count =
       results
@@ -120,13 +130,6 @@ defmodule FactEngine.Util do
     Enum.map(results, fn x ->
       x -- search_values
     end)
-  end
-
-  defp get_file_contents(file_path) do
-    with {:ok, file_lines} <- get_file_lines(file_path),
-         {:ok, parsed_file_lines} <- parse_file_lines(file_lines) do
-      {:ok, parsed_file_lines}
-    end
   end
 
   defp read_file(file_path) do
