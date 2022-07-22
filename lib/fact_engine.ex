@@ -2,6 +2,7 @@ defmodule FactEngine do
   @moduledoc """
   An Engine of Facts. Add facts and query them.
   """
+  alias FactEngine.State
   alias FactEngine.Util
 
   @doc """

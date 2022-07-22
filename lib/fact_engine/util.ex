@@ -5,21 +5,19 @@ defmodule FactEngine.Util do
 
   @doc """
   Writes false for query when the results list is empty.
+
+  Writes true for query when the results list contains at least one item and the query arguments list is empty.
+
+  Otherwise it writes query results is desired format.
   """
   def write([], _query_arguments, _search_values, write_file_path) do
     write_file(write_file_path, "---\nfalse\n")
   end
 
-  @doc """
-  Writes true for query when the results list contains at least one item and the query arguments list is empty.
-  """
   def write(results, [], _search_values, write_file_path) when length(results) >= 1 do
     write_file(write_file_path, "---\ntrue\n")
   end
 
-  @doc """
-  Writes query results is desired format.
-  """
   def write(results, query_arguments, search_values, write_file_path) do
     results = remove_search_values(results, search_values)
 
@@ -58,15 +56,14 @@ defmodule FactEngine.Util do
   end
 
   @doc """
-  Gets lists that contain the search values specified. In this case none were provided so it returns the whole list.
+  Returns the whole list if the search_values is empty.
+
+  Else it returns lists that contain the search values specified.
   """
   def get_lists_that_contain_values(list_of_lists, []) do
     list_of_lists
   end
 
-  @doc """
-   Gets lists that contain the search values specified.
-  """
   def get_lists_that_contain_values(list_of_lists, search_values) do
     Enum.filter(list_of_lists, fn list ->
       Enum.any?(list, fn item -> item in search_values end)
