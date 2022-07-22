@@ -31,35 +31,51 @@ defmodule FactEngine do
   end
 
   defp write([], _query_arguments, _search_values, write_file_path) do
-    write_file(write_file_path, "\n---\nfalse")
+    write_file(write_file_path, "---\nfalse\n")
   end
 
   defp write(results, [], _search_values, write_file_path) when length(results) >= 1 do
-    write_file(write_file_path, "\n---\ntrue")
+    write_file(write_file_path, "---\ntrue\n")
   end
 
   defp write(results, query_arguments, search_values, write_file_path) do
     results = remove_search_values(results, search_values)
 
+    {results, query_arguments} = maybe_dedup(results, query_arguments)
+
     to_write =
-      Enum.reduce(results, "\n---\n", fn result, acc ->
-        result =
+      Enum.reduce(results, "---\n", fn result, top_acc ->
+        joined_result =
           result
           |> Enum.zip(query_arguments)
-          |> Enum.reduce("", fn {r, q}, acc ->
-            acc <> "#{q}: #{r}, "
+          |> Enum.reduce("", fn {r, q}, bottom_acc ->
+            bottom_acc <> "#{q}: #{r}, "
           end)
           |> String.slice(0..-3)
 
-        IO.puts(result)
-
-        acc <> result
+        top_acc <> joined_result <> "\n"
       end)
 
     write_file(write_file_path, to_write)
   end
 
-  def remove_search_values(results, search_values) do
+  defp maybe_dedup(results, query_arguments) do
+    result_dedup_count =
+      results
+      |> List.first()
+      |> Enum.dedup()
+      |> Enum.count()
+
+    case result_dedup_count do
+      1 ->
+        {Enum.map(results, &Enum.dedup(&1)), Enum.dedup(query_arguments)}
+
+      _ ->
+        {results, query_arguments}
+    end
+  end
+
+  defp remove_search_values(results, search_values) do
     Enum.map(results, fn x ->
       x -- search_values
     end)
