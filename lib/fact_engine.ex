@@ -1,21 +1,21 @@
 defmodule FactEngine do
-  def run(read_file_path, _write_file_path) do
+  def run(read_file_path, write_file_path) do
     with {:ok, file_contents} <- get_file_contents(read_file_path) do
-      process_file_contents(file_contents)
+      process_file_contents(file_contents, write_file_path)
     end
   end
 
-  defp process_file_contents(file_contents) do
+  defp process_file_contents(file_contents, write_file_path) do
     for operation <- file_contents do
-      process(operation)
+      process(operation, write_file_path)
     end
   end
 
-  defp process(["INPUT", statement, arguments]) do
+  defp process(["INPUT", statement, arguments], _write_file_path) do
     State.update(statement, arguments)
   end
 
-  defp process(["QUERY", statement, arguments]) do
+  defp process(["QUERY", statement, arguments], write_file_path) do
     engine_state = State.get(statement)
     search_values = get_values_to_search_with(arguments)
     frequencies = get_frequency_counts(arguments)
@@ -27,20 +27,42 @@ defmodule FactEngine do
 
     query_arguments = get_query_arguments(arguments)
 
-    print(results, query_arguments, search_values)
+    write(results, query_arguments, search_values, write_file_path)
   end
 
-  defp print([], _query_arguments, _search_values) do
-    IO.puts("---")
-    IO.puts("false")
+  defp write([], _query_arguments, _search_values, write_file_path) do
+    write_file(write_file_path, "\n---\nfalse")
   end
 
-  defp print(_results, [], _search_values) do
-    IO.puts("---")
-    IO.puts("true")
+  defp write(results, [], _search_values, write_file_path) when length(results) >= 1 do
+    write_file(write_file_path, "\n---\ntrue")
   end
 
-  defp print(results, query_arguments, search_values) do
+  defp write(results, query_arguments, search_values, write_file_path) do
+    results = remove_search_values(results, search_values)
+
+    to_write =
+      Enum.reduce(results, "\n---\n", fn result, acc ->
+        result =
+          result
+          |> Enum.zip(query_arguments)
+          |> Enum.reduce("", fn {r, q}, acc ->
+            acc <> "#{q}: #{r}, "
+          end)
+          |> String.slice(0..-3)
+
+        IO.puts(result)
+
+        acc <> result
+      end)
+
+    write_file(write_file_path, to_write)
+  end
+
+  def remove_search_values(results, search_values) do
+    Enum.map(results, fn x ->
+      x -- search_values
+    end)
   end
 
   defp get_file_contents(file_path) do
@@ -55,7 +77,7 @@ defmodule FactEngine do
   end
 
   defp write_file(file_path, content) do
-    File.write(file_path, content)
+    File.write(file_path, content, [:append])
   end
 
   defp get_file_lines(file_path) do
