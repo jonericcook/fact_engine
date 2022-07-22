@@ -52,7 +52,7 @@ false
 
 In an effort to not have duplicates in `state` I chose to sort the arguments. I chose this because to me it wouldn't make sense to have two entries - one for `INPUT are_friends (alex, sam)` and one for `INPUT are_friends (sam, alex)`.
 
-It was unclear how to create the constraint between the number of arguments and a statement therefore I opted to not verify the number of arguments for a given statement. For example `INPUT love (cat, dog)` and `INPUT love (cheese)` would both be accepted. As I read this I think I could handle that scenario by having a MapSet for each statement and each length of arguments provided with said statement. For example:
+It was unclear how to create the constraint between the number of arguments and a statement therefore I opted to not verify the number of arguments for a given statement. For example `INPUT love (cat, dog)` and `INPUT love (cheese)` would both be accepted. As I read this I think I could handle that scenario by having a `MapSet` for each statement and each length of arguments provided with said statement. For example:
 
 ```
 %{

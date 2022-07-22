@@ -3,12 +3,4 @@ X: 3, Y: 5, Z: 7
 ---
 false
 ---
-X: 3, X: 3, X: 3, X: 3
----
-X: alex
-X: sam
----
-X: alex, Y: sam
-X: frog, Y: toad
----
-X: sam, X: sam
+X: 3
