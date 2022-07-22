@@ -1,8 +1,8 @@
 ---
 false
 ---
-X: lucy
-X: garfield
 X: bowler_cat
+X: garfield
+X: lucy
 ---
 FavoriteFood: lasagna

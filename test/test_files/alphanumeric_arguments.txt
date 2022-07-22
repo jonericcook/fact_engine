@@ -1,0 +1,1 @@
+INPUT loves (cat, $pat)

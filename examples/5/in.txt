@@ -1,6 +1,0 @@
-INPUT make_a_quad (3, 4, 5, 7)
-INPUT make_a_quad (5, 12, 13, 10)
-QUERY make_a_quad (X, 4, Y, Z)
-QUERY make_a_quad (X, X, Y, Z)
-INPUT make_a_quad (3, 3, 3, 3)
-QUERY make_a_quad (X, X, X, X)

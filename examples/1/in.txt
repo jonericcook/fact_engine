@@ -1,5 +1,2 @@
 INPUT is_a_cat (lucy)
-INPUT is_a_cat (frank)
-INPUT is_a_cat (carl)
 QUERY is_a_cat (lucy)
-QUERY is_a_cat (X)

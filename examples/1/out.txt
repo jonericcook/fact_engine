@@ -1,6 +1,2 @@
 ---
 true
----
-X: carl
-X: frank
-X: lucy
